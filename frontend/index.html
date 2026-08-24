@@ -1,0 +1,389 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8" />
+<meta name="viewport" content="width=device-width, initial-scale=1.0" />
+<title>SupportAgent AI</title>
+<link rel="preconnect" href="https://fonts.googleapis.com">
+<link href="https://fonts.googleapis.com/css2?family=Inter:wght@400;500;600;700&display=swap" rel="stylesheet">
+<style>
+  :root {
+    --ink: #202124;
+    --ink-soft: #6B7280;
+    --bg: #FFFFFF;
+    --bg-hover: #F7F7F8;
+    --border: #E5E5E5;
+    --teal: #1F8A8A;
+    --teal-dark: #166868;
+    --teal-tint: #E8F4F4;
+  }
+  * { box-sizing: border-box; }
+  body {
+    margin: 0;
+    font-family: 'Inter', -apple-system, sans-serif;
+    background: var(--bg);
+    color: var(--ink);
+    min-height: 100vh;
+  }
+
+  .shell { max-width: 720px; margin: 0 auto; padding: 0 24px; }
+
+  header {
+    display: flex;
+    align-items: center;
+    justify-content: space-between;
+    padding: 18px 0;
+    border-bottom: 1px solid var(--border);
+  }
+
+  .logo { display: flex; align-items: center; gap: 8px; font-weight: 600; font-size: 15px; }
+  .logo-mark {
+    width: 26px; height: 26px; border-radius: 7px;
+    background: var(--teal); color: white;
+    display: flex; align-items: center; justify-content: center;
+    font-size: 13px; font-weight: 700;
+  }
+
+  .ticket-badge {
+    font-size: 12px; color: var(--teal-dark); background: var(--teal-tint);
+    border-radius: 20px; padding: 5px 12px; white-space: nowrap;
+  }
+
+  /* Landing / empty state */
+  .landing {
+    min-height: calc(100vh - 64px);
+    display: flex;
+    flex-direction: column;
+    align-items: center;
+    justify-content: center;
+    text-align: center;
+    padding-bottom: 15vh;
+  }
+
+  .landing h1 {
+    font-size: 28px;
+    font-weight: 600;
+    margin: 0 0 8px;
+    letter-spacing: -0.02em;
+  }
+
+  .landing p {
+    font-size: 14px;
+    color: var(--ink-soft);
+    margin: 0 0 28px;
+  }
+
+  .search-pill {
+    width: 100%;
+    max-width: 560px;
+    display: flex;
+    align-items: center;
+    gap: 10px;
+    background: var(--bg);
+    border: 1.5px solid var(--border);
+    border-radius: 26px;
+    padding: 6px 8px 6px 20px;
+    box-shadow: 0 1px 3px rgba(0,0,0,0.04);
+    transition: border-color 0.15s, box-shadow 0.15s;
+  }
+
+  .search-pill:focus-within {
+    border-color: var(--teal);
+    box-shadow: 0 2px 10px rgba(31,138,138,0.12);
+  }
+
+  .search-pill textarea {
+    flex: 1;
+    border: none;
+    outline: none;
+    resize: none;
+    font-family: 'Inter', sans-serif;
+    font-size: 15px;
+    line-height: 1.4;
+    max-height: 100px;
+    padding: 8px 0;
+    background: transparent;
+    color: var(--ink);
+  }
+
+  .search-pill textarea::placeholder { color: #9AA0A6; }
+
+  .send-btn {
+    width: 36px; height: 36px; border-radius: 50%;
+    border: none; background: var(--ink); color: white;
+    display: flex; align-items: center; justify-content: center;
+    cursor: pointer; flex-shrink: 0; font-size: 15px;
+    transition: background 0.15s;
+  }
+  .send-btn:hover { background: var(--teal); }
+  .send-btn:disabled { background: #D1D5DB; cursor: default; }
+
+  .suggestions {
+    display: flex; gap: 8px; flex-wrap: wrap;
+    justify-content: center; margin-top: 18px; max-width: 560px;
+  }
+
+  .suggestion-pill {
+    font-size: 13px; color: var(--ink-soft);
+    background: var(--bg-hover); border: 1px solid var(--border);
+    border-radius: 20px; padding: 7px 14px; cursor: pointer;
+    transition: border-color 0.15s, color 0.15s;
+  }
+  .suggestion-pill:hover { border-color: var(--teal); color: var(--teal-dark); }
+
+  /* Thread view */
+  .thread { display: none; padding: 32px 0 24px; }
+  .thread.active { display: block; }
+
+  .qa-block { margin-bottom: 40px; animation: rise 0.3s ease; }
+  @keyframes rise { from { opacity: 0; transform: translateY(8px); } to { opacity: 1; transform: translateY(0); } }
+
+  .question {
+    font-size: 20px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
+    margin: 0 0 16px;
+    color: var(--ink);
+  }
+
+  .steps {
+    display: flex; flex-direction: column; gap: 6px;
+    margin-bottom: 14px; padding-left: 2px;
+  }
+
+  .step-line {
+    display: flex; align-items: center; gap: 8px;
+    font-size: 13px; color: var(--ink-soft);
+  }
+
+  .step-dot {
+    width: 6px; height: 6px; border-radius: 50%;
+    background: var(--teal); flex-shrink: 0;
+  }
+  .step-dot.pending { background: #D1D5DB; animation: pulse 1.2s infinite ease-in-out; }
+  @keyframes pulse { 0%, 100% { opacity: 0.4; } 50% { opacity: 1; } }
+
+  .answer {
+    font-size: 15px;
+    line-height: 1.7;
+    color: var(--ink);
+    margin-bottom: 14px;
+    white-space: pre-wrap;
+  }
+
+  .tool-row { display: flex; flex-wrap: wrap; gap: 6px; margin-bottom: 4px; }
+
+  .tool-chip {
+    display: inline-flex; align-items: center; gap: 5px;
+    font-size: 12px; color: var(--teal-dark);
+    background: var(--teal-tint); border: 1px solid #CFE8E8;
+    border-radius: 14px; padding: 4px 10px 4px 8px;
+    cursor: default;
+  }
+  .tool-chip .num {
+    width: 14px; height: 14px; border-radius: 50%;
+    background: var(--teal); color: white;
+    font-size: 9px; font-weight: 700;
+    display: flex; align-items: center; justify-content: center;
+    flex-shrink: 0;
+  }
+
+  .followup {
+    margin-top: 24px;
+  }
+
+  footer.input-dock {
+    position: sticky; bottom: 0;
+    background: linear-gradient(to top, var(--bg) 60%, transparent);
+    padding: 16px 0 20px;
+  }
+
+  .thinking-text {
+    font-size: 13px; color: var(--ink-soft);
+    display: flex; align-items: center; gap: 6px;
+  }
+
+  .thinking-text .spinner {
+    width: 10px; height: 10px; border-radius: 50%;
+    border: 1.5px solid var(--border); border-top-color: var(--teal);
+    animation: spin 0.7s linear infinite;
+  }
+  @keyframes spin { to { transform: rotate(360deg); } }
+</style>
+</head>
+<body>
+
+<div class="shell">
+  <header>
+    <div class="logo">
+      <div class="logo-mark">S</div>
+      SupportAgent AI
+    </div>
+    <div class="ticket-badge" id="ticket-badge">0 tickets filed</div>
+  </header>
+
+  <div class="landing" id="landing">
+    <h1>Ask about your order, returns, or anything else</h1>
+    <p>I'll check order status, search policy, or escalate to a human — whichever your question actually needs.</p>
+    <div class="search-pill">
+      <textarea id="landing-input" placeholder="e.g. Where's my order ORD-1001?" rows="1"></textarea>
+      <button class="send-btn" id="landing-send" type="button" aria-label="Send">➤</button>
+    </div>
+    <div class="suggestions">
+      <span class="suggestion-pill" data-msg="What's the status of order ORD-1001?">Track an order</span>
+      <span class="suggestion-pill" data-msg="Can I return a defective item?">Ask about returns</span>
+      <span class="suggestion-pill" data-msg="I received the wrong item and I'm frustrated">File a complaint</span>
+    </div>
+  </div>
+
+  <div class="thread" id="thread"></div>
+</div>
+
+<footer class="input-dock" id="input-dock" style="display:none">
+  <div class="shell">
+    <div class="search-pill">
+      <textarea id="thread-input" placeholder="Ask a follow-up..." rows="1"></textarea>
+      <button class="send-btn" id="thread-send" type="button" aria-label="Send">➤</button>
+    </div>
+  </div>
+</footer>
+
+<script>
+  const API_BASE = window.location.origin;
+  const landing = document.getElementById('landing');
+  const thread = document.getElementById('thread');
+  const inputDock = document.getElementById('input-dock');
+  const ticketBadge = document.getElementById('ticket-badge');
+
+  const landingInput = document.getElementById('landing-input');
+  const landingSend = document.getElementById('landing-send');
+  const threadInput = document.getElementById('thread-input');
+  const threadSend = document.getElementById('thread-send');
+
+  const TOOL_LABELS = {
+    check_order_status: 'check_order_status',
+    search_return_policy: 'search_return_policy',
+    create_support_ticket: 'create_support_ticket',
+  };
+
+  const THINKING_STEPS = [
+    'Reading your question…',
+    'Deciding which tools to use…',
+    'Calling tools…',
+    'Composing answer…',
+  ];
+
+  document.querySelectorAll('.suggestion-pill').forEach(pill => {
+    pill.addEventListener('click', () => ask(pill.dataset.msg));
+  });
+
+  [landingInput, threadInput].forEach(el => {
+    el.addEventListener('input', () => {
+      el.style.height = 'auto';
+      el.style.height = Math.min(el.scrollHeight, 100) + 'px';
+    });
+    el.addEventListener('keydown', (e) => {
+      if (e.key === 'Enter' && !e.shiftKey) {
+        e.preventDefault();
+        const val = el.value.trim();
+        if (val) ask(val);
+      }
+    });
+  });
+
+  landingSend.addEventListener('click', () => {
+    const val = landingInput.value.trim();
+    if (val) ask(val);
+  });
+  threadSend.addEventListener('click', () => {
+    const val = threadInput.value.trim();
+    if (val) ask(val);
+  });
+
+  async function refreshTicketCount() {
+    try {
+      const res = await fetch(API_BASE + '/health');
+      const data = await res.json();
+      ticketBadge.textContent = data.tickets_created + (data.tickets_created === 1 ? ' ticket filed' : ' tickets filed');
+    } catch (e) {}
+  }
+
+  async function ask(message) {
+    landingInput.value = '';
+    threadInput.value = '';
+    landing.style.display = 'none';
+    thread.classList.add('active');
+    inputDock.style.display = 'block';
+
+    const block = document.createElement('div');
+    block.className = 'qa-block';
+
+    const qEl = document.createElement('div');
+    qEl.className = 'question';
+    qEl.textContent = message;
+    block.appendChild(qEl);
+
+    const stepsEl = document.createElement('div');
+    stepsEl.className = 'thinking-text';
+    stepsEl.innerHTML = '<span class="spinner"></span><span id="step-text">' + THINKING_STEPS[0] + '</span>';
+    block.appendChild(stepsEl);
+
+    thread.appendChild(block);
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+
+    let stepIndex = 0;
+    const stepTextEl = stepsEl.querySelector('#step-text');
+    const stepInterval = setInterval(() => {
+      stepIndex = (stepIndex + 1) % THINKING_STEPS.length;
+      stepTextEl.textContent = THINKING_STEPS[stepIndex];
+    }, 1400);
+
+    try {
+      const res = await fetch(API_BASE + '/chat', {
+        method: 'POST',
+        headers: { 'Content-Type': 'application/json' },
+        body: JSON.stringify({ message })
+      });
+      const data = await res.json();
+      clearInterval(stepInterval);
+      stepsEl.remove();
+
+      if (!res.ok) throw new Error(data.detail || 'Request failed');
+
+      if (data.tool_calls && data.tool_calls.length) {
+        const toolRow = document.createElement('div');
+        toolRow.className = 'tool-row';
+        data.tool_calls.forEach((tc, i) => {
+          const chip = document.createElement('span');
+          chip.className = 'tool-chip';
+          chip.title = JSON.stringify(tc.input);
+          chip.innerHTML = '<span class="num">' + (i + 1) + '</span>' + (TOOL_LABELS[tc.tool] || tc.tool);
+          toolRow.appendChild(chip);
+        });
+        block.appendChild(toolRow);
+      }
+
+      const answerEl = document.createElement('div');
+      answerEl.className = 'answer';
+      answerEl.textContent = data.answer;
+      block.appendChild(answerEl);
+
+      refreshTicketCount();
+    } catch (err) {
+      clearInterval(stepInterval);
+      stepsEl.remove();
+      const errEl = document.createElement('div');
+      errEl.className = 'answer';
+      errEl.style.color = '#B3261E';
+      errEl.textContent = 'Error: ' + err.message;
+      block.appendChild(errEl);
+    }
+
+    window.scrollTo({ top: document.body.scrollHeight, behavior: 'smooth' });
+    threadInput.focus();
+  }
+
+  refreshTicketCount();
+</script>
+</body>
+</html>
